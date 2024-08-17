@@ -38,10 +38,11 @@ Things to change
 ----------------
 
 1. Ensure the code is written in python 3 rather than python 2
-2. Generate family trees from below (i.e. tracing one's known ancestors) as well as from above (i.e. tracing one's descendants).
-3. Add places of birth/death
-4. Add support for marriages between cousins (needed for e.g. nonna Pia La Rocca and nonno Giovanni Lipari).
-5. Add some simple tests
+2. Change family file format to .csv
+3. Generate family trees from below (i.e. tracing one's known ancestors) as well as from above (i.e. tracing one's descendants).
+4. Add places of birth/death
+5. Add support for marriages between cousins (needed for e.g. nonna Pia La Rocca and nonno Giovanni Lipari).
+6. Add some simple tests
 
 Things changed
 --------------
