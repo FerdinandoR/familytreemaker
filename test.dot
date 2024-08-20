@@ -2,17 +2,17 @@ digraph {
 	node [shape=box];
 	edge [dir=none];
 
-	LouisXIV[label="Louis XIV\n1638-09-05 † 1715-09-01",style=filled,fillcolor=azure2];
-	MarieThrsedAutriche[label="Marie-Thérèse d'Autriche",style=filled,fillcolor=bisque];
-	Louis1661[label="Louis de France\n1661-11-01 † 1711-04-14",style=filled,fillcolor=azure2];
-	MarieThrsendeFrance[label="Marie-Thérèse\nde France\n« la Petite Madame»\n1667 † 1672",style=filled,fillcolor=bisque];
-	PhilippeCharlesndeFrance[label="Philippe-Charles\nde France\n« Duc d'Anjou»\n1668-08-05",style=filled,fillcolor=azure2];
-	MarieAnnenChristinendeBavire[label="Marie Anne\nChristine\nde Bavière",style=filled,fillcolor=bisque];
-	Louis1682[label="Louis de France\n« duc de Bourgogne»\n1682 † 1712-02-19",style=filled,fillcolor=azure2];
-	Philippe[label="Philippe\n« roi d'Espagne\nsous le nom de\nPhilippe V»\n1683 † 1746",style=filled,fillcolor=azure2];
+	LouisXIV[label="Louis XIV\n1638-09-05 â€  1715-09-01",style=filled,fillcolor=azure2];
+	MarieThrsedAutriche[label="Marie-ThÃ©rÃ¨se d'Autriche",style=filled,fillcolor=bisque];
+	Louis1661[label="Louis de France\n1661-11-01 â€  1711-04-14",style=filled,fillcolor=azure2];
+	MarieThrsendeFrance[label="Marie-ThÃ©rÃ¨se\nde France\nÂ« la Petite MadameÂ»\n1667 â€  1672",style=filled,fillcolor=bisque];
+	PhilippeCharlesndeFrance[label="Philippe-Charles\nde France\nÂ« Duc d'AnjouÂ»\n1668-08-05",style=filled,fillcolor=azure2];
+	MarieAnnenChristinendeBavire[label="Marie Anne\nChristine\nde BaviÃ¨re",style=filled,fillcolor=bisque];
+	Louis1682[label="Louis de France\nÂ« duc de BourgogneÂ»\n1682 â€  1712-02-19",style=filled,fillcolor=azure2];
+	Philippe[label="Philippe\nÂ« roi d'Espagne\nsous le nom de\nPhilippe VÂ»\n1683 â€  1746",style=filled,fillcolor=azure2];
 	Charles[label="Charles\n1686-07-31",style=filled,fillcolor=azure2];
-	MarieAdladendeSavoie[label="Marie-Adélaïde\nde Savoie\n† 1712-02-12",style=filled,fillcolor=bisque];
-	LouisXV[label="Louis XV\n1710-02-15 † 1774-05-10",style=filled,fillcolor=azure2];
+	MarieAdladendeSavoie[label="Marie-AdÃ©laÃ¯de\nde Savoie\nâ€  1712-02-12",style=filled,fillcolor=bisque];
+	LouisXV[label="Louis XV\n1710-02-15 â€  1774-05-10",style=filled,fillcolor=azure2];
 
 	{ rank=same;
 		LouisXIV -> h0 -> MarieThrsedAutriche;
