@@ -18,7 +18,6 @@ def test_familytreemaker():
     with open(test_out,'wb') as fp:
         lines = check_output(f"python familytreemaker.py -a" 
                              f"{source_name} {family_file}")
-        print(lines)
         fp.write(lines)
     assert filecmp.cmp(test_out, ground_truth_file), (
         f"Output file {test_out} and {ground_truth_file} differ."

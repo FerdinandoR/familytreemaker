@@ -24,8 +24,8 @@ Louis XIV and saving the image in LouisXIVfamily.png.
 
 """
 
-__author__ = "Adrien Vergé"
-__copyright__ = "Copyright 2013, Adrien Vergé"
+__author__ = "Adrien Vergé, Ferdinando Randisi"
+__copyright__ = "Copyright 2013, Adrien Vergé, 2024, Ferdinando Randisi"
 __license__ = "GPL"
 __version__ = "1.0"
 
@@ -42,7 +42,7 @@ class Person:
 	- id			unique ID to be distinguished in a dictionnary
 	- attr			attributes (e.g. gender, birth date...)
 	- households	list of households this person belongs to
-	- follow_kids	boolean to tell the algorithm to display this person's
+	- follow_children	boolean to tell the algorithm to display this person's
 					descendent or not
 
 	"""
@@ -73,14 +73,14 @@ class Person:
 			if 'unique' in self.attr:
 				self.id += str(random.randint(100, 999))
 
-		self.follow_kids = True
+		self.follow_children = True
 
 	def __str__(self):
 		return self.name
 
 	def dump(self):
-		return	'Person: %s (%s)\n' % (self.name, str(self.attr)) + \
-				'  %d households' % len(self.households)
+		return	f'Person: {self.name} ({self.attr})\n' + \
+				f' {len(self.households)} households'
 
 	def graphviz(self):
 		label = self.name
@@ -104,22 +104,22 @@ class Household:
 	"""This class represents a household, i.e. a union of two person.
 
 	Those two persons are listed in 'parents'. If they have children, they are
-	listed in 'kids'.
+	listed in 'children'.
 
 	"""
 
 	def __init__(self):
 		self.parents = []
-		self.kids = []
+		self.children = []
 		self.id = 0
 	
 	def __str__(self):
-		return	'Family:\n' + \
-				'\tparents  = ' + ', '.join(map(str, self.parents)) + '\n' \
-				'\tchildren = ' + ', '.join(map(str, self.kids))
+		return	('Household:\n'
+				f'\tparents  = {", ".join(map(str, self.parents))}\n'
+				f'\tchildren = {", ".join(map(str, self.children))}')
 
 	def isempty(self):
-		if len(self.parents) == 0 and len(self.kids) == 0:
+		if len(self.parents) == 0 and len(self.children) == 0:
 			return True
 		return False
 
@@ -202,7 +202,7 @@ class Family:
 				if line[0] == '\t':
 					p = self.add_person(line[1:])
 					p.parents = h.parents
-					h.kids.append(p)
+					h.children.append(p)
 				else:
 					p = self.add_person(line)
 					h.parents.append(p)
@@ -230,10 +230,10 @@ class Family:
 		next_gen = []
 
 		for p in gen:
-			if not p.follow_kids:
+			if not p.follow_children:
 				continue
 			for h in p.households:
-				next_gen.extend(h.kids)
+				next_gen.extend(h.children)
 				# append mari/femme
 
 		return next_gen
@@ -258,7 +258,7 @@ class Family:
 
 			if prev:
 				if l <= 1:
-					print('\t\t%s -> %s [style=invis];' % (prev, p.id))
+					print(f'\t\t{prev} -> {p.id} [style=invis];')
 				else:
 					print('\t\t%s -> %s [style=invis];'
 						  % (prev, Family.get_spouse(p.households[0], p).id))
@@ -267,8 +267,8 @@ class Family:
 				prev = p.id
 				continue
 			elif len(p.households) > 2:
-				raise Exception('Person "' + p.name + '" has more than 2 ' +
-								'spouses/husbands: drawing this is not ' +
+				raise Exception(f'Person "{p.name}" has {len(p.households)} '
+								'spouses: drawing more than 2 spouses is not '
 								'implemented')
 
 			# Display those on the left (if any)
@@ -276,14 +276,14 @@ class Family:
 				h = p.households[i]
 				spouse = Family.get_spouse(h, p)
 				print('\t\t%s -> h%d -> %s;' % (spouse.id, h.id, p.id))
-				print('\t\th%d%s;' % (h.id, Family.invisible))
+				print(f'\t\th{h.id}{Family.invisible};')
 
 			# Display those on the right (at least one)
 			for i in range(int(l/2), l):
 				h = p.households[i]
 				spouse = Family.get_spouse(h, p)
-				print('\t\t%s -> h%d -> %s;' % (p.id, h.id, spouse.id))
-				print('\t\th%d%s;' % (h.id, Family.invisible))
+				print(f'\t\t{p.id} -> h{h.id} -> {spouse.id};')
+				print(f'\t\th{h.id}{Family.invisible};')
 				prev = spouse.id
 		print('\t}')
 
@@ -292,31 +292,29 @@ class Family:
 		prev = None
 		for p in gen:
 			for h in p.households:
-				if len(h.kids) == 0:
+				if len(h.children) == 0:
 					continue
 				if prev:
-					print('\t\t%s -> h%d_0 [style=invis];' % (prev, h.id))
-				l = len(h.kids)
+					print(f'\t\t{prev} -> h{h.id}_0 [style=invis];')
+				l = len(h.children)
 				if l % 2 == 0:
 					# We need to add a node to keep symmetry
 					l += 1
-				print('\t\t' + ' -> '.join(map(lambda x: 'h%d_%d' % (h.id, x), range(l))) + ';')
+				print('\t\t' + ' -> '.join(map(lambda x: f'h{h.id}_{x}', range(l))) + ';')
 				for i in range(l):
-					print('\t\th%d_%d%s;' % (h.id, i, Family.invisible))
+					print(f'\t\th{h.id}_{i}{Family.invisible};')
 					prev = 'h%d_%d' % (h.id, i)
 		print('\t}')
 
 		for p in gen:
 			for h in p.households:
-				if len(h.kids) > 0:
-					print('\t\th%d -> h%d_%d;'
-					      % (h.id, h.id, int(len(h.kids)/2)))
+				if len(h.children) > 0:
+					print(f'\t\th{h.id} -> h{h.id}_{int(len(h.children)/2)};')
 					i = 0
-					for c in h.kids:
-						print('\t\th%d_%d -> %s;'
-						      % (h.id, i, c.id))
+					for c in h.children:
+						print(f'\t\th{h.id}_{i} -> {c.id};')
 						i += 1
-						if i == len(h.kids)/2:
+						if i == len(h.children)/2:
 							i += 1
 
 	def output_descending_tree(self, ancestor):
@@ -327,8 +325,8 @@ class Family:
 		# Find the first households
 		gen = [ancestor]
 
-		print('digraph {\n' + \
-		      '\tnode [shape=box];\n' + \
+		print('digraph {\n'
+		      '\tnode [shape=box];\n'
 		      '\tedge [dir=none];\n')
 
 		for p in self.everybody.values():
@@ -359,15 +357,14 @@ def main():
 	family = Family()
 
 	# Populate the family
-	f = open(args.input, 'r', encoding='utf-8')
-	family.populate(f)
-	f.close()
+	with open(args.input, 'r', encoding='utf-8') as f:
+		family.populate(f)
 
 	# Find the ancestor from whom the tree is built
 	if args.ancestor:
 		ancestor = family.find_person(args.ancestor)
 		if not ancestor:
-			raise Exception('Cannot find person "' + args.ancestor + '"')
+			raise Exception(f'Cannot find person "{args.ancestor}"')
 	else:
 		ancestor = family.find_first_ancestor()
 
