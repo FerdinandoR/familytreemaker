@@ -67,11 +67,11 @@ class Person:
 			self.name = desc
 
 		if 'id' in self.attr:
-			  self.id = self.attr['id']
+			self.id = self.attr['id']
 		else:
 			self.id = re.sub('[^0-9A-Za-z]', '', self.name)
 			if 'unique' in self.attr:
-				  self.id += str(random.randint(100, 999))
+				self.id += str(random.randint(100, 999))
 
 		self.follow_kids = True
 
