@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Copyright (C) 2013 Adrien Vergé
+# Copyright (C) 2013 Adrien Vergé, 2024 Ferdinando Randisi
 
 """familytreemaker
 
@@ -32,7 +32,7 @@ __version__ = "1.0"
 import argparse
 import random
 import re
-import sys
+import pandas as pd
 
 class Person:
 	"""This class represents a person.
@@ -47,11 +47,18 @@ class Person:
 
 	"""
 
-	def __init__(self, desc):
+	def __init__(self, arg):
 		self.attr = {}
 		self.parents = []
 		self.households = []
 
+		if isinstance(arg, str):
+			self.from_str(arg)
+
+		if isinstance(arg, pd.Series):
+			self.from_series(arg)
+
+	def from_str(self, desc):
 		desc = desc.strip()
 		if '(' in desc and ')' in desc:
 			self.name, attr = desc[0:-1].split('(')
@@ -300,7 +307,9 @@ class Family:
 				if l % 2 == 0:
 					# We need to add a node to keep symmetry
 					l += 1
-				print('\t\t' + ' -> '.join(map(lambda x: f'h{h.id}_{x}', range(l))) + ';')
+				print('\t\t' + 
+					' -> '.join(map(lambda x: f'h{h.id}_{x}', range(l))) + 
+					';')
 				for i in range(l):
 					print(f'\t\th{h.id}_{i}{Family.invisible};')
 					prev = 'h%d_%d' % (h.id, i)
