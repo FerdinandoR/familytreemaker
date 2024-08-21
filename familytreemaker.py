@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2013 Adrien Vergé, 2024 Ferdinando Randisi
 
-"""familytreemaker
+"""
+familytreemaker
 
 This program creates family tree graphs from simple text files.
 
@@ -16,8 +17,7 @@ containing the graph, you will need a graph drawer such as GraphViz.
 
 For instance:
 
-$ ./familytreemaker.py -a 'Louis XIV' LouisXIVfamily.txt | \
-	dot -Tpng -o LouisXIVfamily.png
+$ ./familytreemaker.py -a 'Louis XIV' LouisXIVfamily.txt | dot -Tpng -o LouisXIVfamily.png
 
 will generate the tree from the infos in LouisXIVfamily.txt, starting from
 Louis XIV and saving the image in LouisXIVfamily.png.
@@ -35,7 +35,8 @@ import re
 import pandas as pd
 
 class Person:
-	"""This class represents a person.
+	"""
+	This class represents a person.
 
 	Characteristics:
 	- name			real name of the person
@@ -108,7 +109,8 @@ class Person:
 		return self.id + '[' + ','.join(opts) + ']'
 
 class Household:
-	"""This class represents a household, i.e. a union of two person.
+	"""
+	This class represents a household, i.e. a union of two person.
 
 	Those two persons are listed in 'parents'. If they have children, they are
 	listed in 'children'.
@@ -131,7 +133,8 @@ class Household:
 		return False
 
 class Family:
-	"""Represents the whole family.
+	"""
+	Represents the whole family.
 
 	'everybody' contains all persons, indexed by their unique id
 	'households' is the list of all unions (with or without children)
@@ -144,7 +147,8 @@ class Family:
 	invisible = '[shape=circle,label="",height=0.01,width=0.01]';
 
 	def add_person(self, string):
-		"""Adds a person to self.everybody, or update his/her info if this
+		"""
+		Adds a person to self.everybody, or update his/her info if this
 		person already exists.
 
 		"""
@@ -159,7 +163,8 @@ class Family:
 		return self.everybody[key]
 
 	def add_household(self, h):
-		"""Adds a union (household) to self.households, and updates the
+		"""
+		Adds a union (household) to self.households, and updates the
 		family members infos about this union.
 
 		"""
@@ -175,7 +180,8 @@ class Family:
 				p.households.append(h)
 
 	def find_person(self, name):
-		"""Tries to find a person matching the 'name' argument.
+		"""
+		Tries to find a person matching the 'name' argument.
 
 		"""
 		# First, search in ids
@@ -186,33 +192,54 @@ class Family:
 			if p.name == name:
 				return p
 		return None
+
+	def populate(self, file_name):
+			if file_name.split('.')[-1] == 'csv':
+				self.populate_csv(file_name)
+			else:
+				self.populate_txt(file_name)
 		
-	def populate(self, f):
-		"""Reads the input file line by line, to find persons and unions.
+	def populate_txt(self, file_name):
+		"""
+		Reads the input file line by line, to find persons and unions.
 
 		"""
-		h = Household()
-		while True:
-			line = f.readline()
-			if line == '': # end of file
-				if not h.isempty():
-					self.add_household(h)
-				break
-			line = line.rstrip()
-			if line == '':
-				if not h.isempty():
-					self.add_household(h)
-				h = Household()
-			elif line[0] == '#':
-				continue
-			else:
-				if line[0] == '\t':
-					p = self.add_person(line[1:])
-					p.parents = h.parents
-					h.children.append(p)
+		with open(file_name, 'r', encoding='utf-8') as f:
+			h = Household()
+			while True:
+				line = f.readline()
+				if line == '': # end of file
+					if not h.isempty():
+						self.add_household(h)
+					break
+				line = line.rstrip()
+				if line == '':
+					if not h.isempty():
+						self.add_household(h)
+					h = Household()
+				elif line[0] == '#':
+					continue
 				else:
-					p = self.add_person(line)
-					h.parents.append(p)
+					if line[0] == '\t':
+						p = self.add_person(line[1:])
+						p.parents = h.parents
+						h.children.append(p)
+					else:
+						p = self.add_person(line)
+						h.parents.append(p)
+
+	def populate_csv(self,file_name):
+		"""
+		Reads a family from a .csv file, populating people and 
+		households.
+		
+		"""
+		# Load the .csv into a dataframe
+
+		# Perform some sanity check for the input
+
+			# Check that each identifier is unique
+			# Add custom identifiers to the missing ones
 
 	def find_first_ancestor(self):
 		"""Returns the first ancestor found.
@@ -366,8 +393,7 @@ def main():
 	family = Family()
 
 	# Populate the family
-	with open(args.input, 'r', encoding='utf-8') as f:
-		family.populate(f)
+	family.populate(args.input)
 
 	# Find the ancestor from whom the tree is built
 	if args.ancestor:
