@@ -83,6 +83,34 @@ class Person:
 
 		self.follow_children = True
 
+	def from_series(self, row):
+		d = dict(row)
+		mandatory_args = ('id',)
+		opt_args = ('name',
+					'surname',
+					'sex',
+					'birthplace',
+					'birthday',
+					'deathplace',
+					'deathday',
+					'spouse',
+					'mother',
+					'father')
+
+		# Ensure there are no unknown arguments
+		unknown_args = set(d.keys()) - set(mandatory_args + opt_args)
+		for arg in unknown_args:
+			raise ValueError(f'Unknown argument {arg} when creating person '
+					f'from {row}')
+		# Ensure all mandatory arguments are present
+		for arg in [a for a in mandatory_args if a not in d.keys()]:
+			raise ValueError(f'Missing mandatory argument {arg} when creating '
+					f' person from {row}')
+		
+		# populate the arguments
+		self.__dict__.update(d)
+
+
 	def __str__(self):
 		return self.name
 
@@ -146,19 +174,18 @@ class Family:
 
 	invisible = '[shape=circle,label="",height=0.01,width=0.01]';
 
-	def add_person(self, string):
+	def add_person(self, person):
 		"""
 		Adds a person to self.everybody, or update his/her info if this
 		person already exists.
 
 		"""
-		p = Person(string)
-		key = p.id
+		key = person.id
 
 		if key in self.everybody:
-			self.everybody[key].attr.update(p.attr)
+			self.everybody[key].attr.update(person.attr)
 		else:
-			self.everybody[key] = p
+			self.everybody[key] = person
 
 		return self.everybody[key]
 
@@ -221,11 +248,11 @@ class Family:
 					continue
 				else:
 					if line[0] == '\t':
-						p = self.add_person(line[1:])
+						p = self.add_person(Person(line[1:]))
 						p.parents = h.parents
 						h.children.append(p)
 					else:
-						p = self.add_person(line)
+						p = self.add_person(Person(line))
 						h.parents.append(p)
 
 	def populate_csv(self,file_name):
@@ -235,11 +262,45 @@ class Family:
 		
 		"""
 		# Load the .csv into a dataframe
+		df = pd.read_csv(file_name, encoding='utf8')
 
 		# Perform some sanity check for the input
+		# TODO:implement the checks below
+		#self.check_df(df)
 
 			# Check that each identifier is unique
-			# Add custom identifiers to the missing ones
+			# Check that if one person lists a second one as their spouse,
+			# the second person reciprocates
+			# Check that everyone who has a father also has a mother
+			# Check that no one is married with themselves
+			# Check that no one is introduced before their parents are
+		
+		# Read the file line by line
+		for i, row in df.iterrows():
+			# Add the person to the list of people
+			p = Person(row)
+			self.add_person(p)
+			# Add the households, if the corresponding spouse has already been inserted
+			spouses = ((row.spouse,) if isinstance(row.spouse,str) 
+			  else row.spouse)
+			for s in spouses:
+				if s in self.everybody.keys():
+					h = Household()
+					h.parents.append(p)
+					h.parents.append(s)
+					self.add_household(h)
+
+					self.everybody[p.id].households.append(h)
+					self.everybody[s.id].households.append(h)
+			# Update the households for which one is a child
+			if not row[['father','mother']].isna().any():
+				#TODO: this might be slow. Could be faster if households were a
+				# dictionary mapping mother-father tuples to households rather
+				# than a households list, maybe
+				for h in self.households:
+					if (h.parents == list(row[['father','mother']]) or 
+						h.parents == list(row[['mother','father']])):
+						h.children.append(p)
 
 	def find_first_ancestor(self):
 		"""Returns the first ancestor found.
@@ -294,6 +355,9 @@ class Family:
 				if l <= 1:
 					print(f'\t\t{prev} -> {p.id} [style=invis];')
 				else:
+					# TODO: this line is never reached when building the
+					# default French royal family tree so is not checked.
+					# Build a test that checks it.
 					print('\t\t%s -> %s [style=invis];'
 						  % (prev, Family.get_spouse(p.households[0], p).id))
 
@@ -361,14 +425,17 @@ class Family:
 		# Find the first households
 		gen = [ancestor]
 
+		# Print the .dot file header
 		print('digraph {\n'
 		      '\tnode [shape=box];\n'
 		      '\tedge [dir=none];\n')
 
+		# Print the description of everyone's box
 		for p in self.everybody.values():
 			print('\t' + p.graphviz() + ';')
 		print('')
 
+		# Print each generation
 		while gen:
 			self.display_generation(gen)
 			gen = self.next_generation(gen)
