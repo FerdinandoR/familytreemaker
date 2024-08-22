@@ -1,9 +1,9 @@
 id,name,surname,sex,birthplace,birthday,deathplace,deathday,spouse,mother,father
 LouisXIV,Louis XIV,,M,,1638-09-05,,1715-09-01,MarieThrsedAutriche,
 MarieThrsedAutriche,Marie-Thérèse d'Autriche,,F,,,,,LouisXIV,
-Louis1661,Louis de France,,M,,1661-11-01,,1711-04-14,MarieAnnenChristinendeBavire,MarieThrsedAutriche,Louis14
-MarieThrsendeFrance,Marie-Thérèse\nde France,la Petite Madame,F,,1667,,1672,,MarieThrsedAutriche,Louis14
-PhilippeCharlesndeFrance,Philippe-Charles\nde France,Duc d'Anjou,M,,1668-08-05,,,,MarieThrsedAutriche,Louis14
+Louis1661,Louis de France,,M,,1661-11-01,,1711-04-14,MarieAnnenChristinendeBavire,MarieThrsedAutriche,LouisXIV
+MarieThrsendeFrance,Marie-Thérèse\nde France,la Petite Madame,F,,1667,,1672,,MarieThrsedAutriche,LouisXIV
+PhilippeCharlesndeFrance,Philippe-Charles\nde France,Duc d'Anjou,M,,1668-08-05,,,,MarieThrsedAutriche,LouisXIV
 MarieAnnenChristinendeBavire,Marie Anne\nChristine\nde Bavière,,F,,,,,Louis1661,
 Louis1682,Louis de France,duc de Bourgogne,M,,1682,,1712-02-19,MS,MarieAnnenChristinendeBavire,Louis1661
 Philippe,Philippe,roi d'Espagne\nsous le nom de\nPhilippe V,M,,1683,,1746,,MarieAnnenChristinendeBavire,Louis1661
