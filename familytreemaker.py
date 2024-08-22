@@ -33,6 +33,9 @@ import argparse
 import random
 import re
 import pandas as pd
+from pathlib import Path
+import codecs
+
 
 class Person:
 	"""
@@ -109,6 +112,9 @@ class Person:
 		
 		# populate the arguments
 		self.__dict__.update(d)
+
+		# Mark to follow children in family tree
+		self.follow_children = True
 
 
 	def __str__(self):
@@ -196,8 +202,7 @@ class Family:
 
 		"""
 		if len(h.parents) != 2:
-			print('error: number of parents != 2')
-			return
+			raise ValueError('error: number of parents != 2')
 
 		h.id = len(self.households)
 		self.households.append(h)
@@ -283,15 +288,16 @@ class Family:
 			# Add the households, if the corresponding spouse has already been inserted
 			spouses = ((row.spouse,) if isinstance(row.spouse,str) 
 			  else row.spouse)
-			for s in spouses:
-				if s in self.everybody.keys():
-					h = Household()
-					h.parents.append(p)
-					h.parents.append(s)
-					self.add_household(h)
+			if not pd.isna(spouses):
+				for s in spouses:
+					if s in self.everybody.keys():
+						h = Household()
+						h.parents.append(p)
+						h.parents.append(self.everybody[s])
+						self.add_household(h)
 
-					self.everybody[p.id].households.append(h)
-					self.everybody[s.id].households.append(h)
+						self.everybody[p.id].households.append(h)
+						self.everybody[self.everybody[s].id].households.append(h)
 			# Update the households for which one is a child
 			if not row[['father','mother']].isna().any():
 				#TODO: this might be slow. Could be faster if households were a
@@ -334,18 +340,20 @@ class Family:
 		return next_gen
 
 	def get_spouse(household, person):
-		"""Returns the spouse or husband of a person in a union.
+		"""
+		Returns the spouse or husband of a person in a union.
 
 		"""
 		return	household.parents[0] == person \
 				and household.parents[1] or household.parents[0]
 
 	def display_generation(self, gen):
-		"""Outputs an entire generation in DOT format.
+		"""
+		Outputs an entire generation in DOT format.
 
 		"""
 		# Display persons
-		print('\t{ rank=same;')
+		dot_lines = ['\t{ rank=same;']
 
 		prev = None
 		for p in gen:
@@ -353,13 +361,13 @@ class Family:
 
 			if prev:
 				if l <= 1:
-					print(f'\t\t{prev} -> {p.id} [style=invis];')
+					dot_lines += [f'\t\t{prev} -> {p.id} [style=invis];']
 				else:
 					# TODO: this line is never reached when building the
 					# default French royal family tree so is not checked.
 					# Build a test that checks it.
-					print('\t\t%s -> %s [style=invis];'
-						  % (prev, Family.get_spouse(p.households[0], p).id))
+					dot_lines +=['\t\t%s -> %s [style=invis];'
+						  % (prev, Family.get_spouse(p.households[0], p).id)]
 
 			if l == 0:
 				prev = p.id
@@ -373,49 +381,50 @@ class Family:
 			for i in range(0, int(l/2)):
 				h = p.households[i]
 				spouse = Family.get_spouse(h, p)
-				print('\t\t%s -> h%d -> %s;' % (spouse.id, h.id, p.id))
-				print(f'\t\th{h.id}{Family.invisible};')
+				dot_lines += [f'\t\t{spouse.id} -> h{h.id} -> {p.id};',
+								f'\t\th{h.id}{Family.invisible};']
 
 			# Display those on the right (at least one)
 			for i in range(int(l/2), l):
 				h = p.households[i]
 				spouse = Family.get_spouse(h, p)
-				print(f'\t\t{p.id} -> h{h.id} -> {spouse.id};')
-				print(f'\t\th{h.id}{Family.invisible};')
+				dot_lines += [f'\t\t{p.id} -> h{h.id} -> {spouse.id};',
+								f'\t\th{h.id}{Family.invisible};']
 				prev = spouse.id
-		print('\t}')
+		dot_lines += ['\t}']
 
 		# Display lines below households
-		print('\t{ rank=same;')
+		dot_lines += ['\t{ rank=same;']
 		prev = None
 		for p in gen:
 			for h in p.households:
 				if len(h.children) == 0:
 					continue
 				if prev:
-					print(f'\t\t{prev} -> h{h.id}_0 [style=invis];')
+					dot_lines += [f'\t\t{prev} -> h{h.id}_0 [style=invis];']
 				l = len(h.children)
 				if l % 2 == 0:
 					# We need to add a node to keep symmetry
 					l += 1
-				print('\t\t' + 
+				dot_lines += ['\t\t' + 
 					' -> '.join(map(lambda x: f'h{h.id}_{x}', range(l))) + 
-					';')
+					';']
 				for i in range(l):
-					print(f'\t\th{h.id}_{i}{Family.invisible};')
+					dot_lines += [f'\t\th{h.id}_{i}{Family.invisible};']
 					prev = 'h%d_%d' % (h.id, i)
-		print('\t}')
+		dot_lines += ['\t}']
 
 		for p in gen:
 			for h in p.households:
 				if len(h.children) > 0:
-					print(f'\t\th{h.id} -> h{h.id}_{int(len(h.children)/2)};')
+					dot_lines += [f'\t\th{h.id} -> h{h.id}_{int(len(h.children)/2)};']
 					i = 0
 					for c in h.children:
-						print(f'\t\th{h.id}_{i} -> {c.id};')
+						dot_lines += [f'\t\th{h.id}_{i} -> {c.id};']
 						i += 1
 						if i == len(h.children)/2:
 							i += 1
+		return dot_lines
 
 	def output_descending_tree(self, ancestor):
 		"""Outputs the whole descending family tree from a given ancestor,
@@ -426,21 +435,22 @@ class Family:
 		gen = [ancestor]
 
 		# Print the .dot file header
-		print('digraph {\n'
-		      '\tnode [shape=box];\n'
-		      '\tedge [dir=none];\n')
+		dot_lines = ['digraph {',
+		      '\tnode [shape=box];',
+		      '\tedge [dir=none];\n']
 
 		# Print the description of everyone's box
 		for p in self.everybody.values():
-			print('\t' + p.graphviz() + ';')
-		print('')
+			dot_lines += ['\t' + p.graphviz() + ';']
+		dot_lines += ['']
 
 		# Print each generation
 		while gen:
-			self.display_generation(gen)
+			dot_lines += self.display_generation(gen)
 			gen = self.next_generation(gen)
 
-		print('}')
+		dot_lines += ['}']
+		return dot_lines
 
 def main():
 	"""Entry point of the program when called as a script.
@@ -471,7 +481,12 @@ def main():
 		ancestor = family.find_first_ancestor()
 
 	# Output the graph descriptor, in DOT format
-	family.output_descending_tree(ancestor)
+	# TODO: the "_a" is added to mark that the family tree was build from an
+	# ancestor, as opposed to both ancestor and descendents
+	dot_out = str(Path(args.input).with_suffix(''))+'_a.dot'
+	#dot_out = Path(args.input).with_suffix('_a.dot')
+	with codecs.open(dot_out,'w','utf-8') as f:
+		f.writelines([l + '\n' for l in family.output_descending_tree(ancestor)])
 
 if __name__ == '__main__':
 	main()
