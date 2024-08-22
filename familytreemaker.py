@@ -73,7 +73,7 @@ class Person:
 					k, v = a.split('=')
 					self.attr[k] = v
 				else:
-					self.attr[a] = True
+					self.attr['sex'] = a
 		else:
 			self.name = desc
 
@@ -111,7 +111,10 @@ class Person:
 					f' person from {row}')
 		
 		# populate the arguments
-		self.__dict__.update(d)
+		self.id = d['id']
+		self.name = d['name']
+		del d['id'], d['name']
+		self.attr = d
 
 		# Mark to follow children in family tree
 		self.follow_children = True
@@ -126,20 +129,20 @@ class Person:
 
 	def graphviz(self):
 		label = self.name
-		if 'surname' in self.attr:
+		if 'surname' in self.attr and self.attr['surname'] != '':
 			label += '\\n« ' + str(self.attr['surname']) + '»'
-		if 'birthday' in self.attr:
+		if 'birthday' in self.attr and self.attr['birthday'] != '':
 			label += '\\n' + str(self.attr['birthday'])
-			if 'deathday' in self.attr:
+			if 'deathday' in self.attr and self.attr['deathday'] != '':
 				label += ' † ' + str(self.attr['deathday'])
-		elif 'deathday' in self.attr:
+		elif 'deathday' in self.attr and self.attr['deathday'] != '':
 			label += '\\n† ' + str(self.attr['deathday'])
-		if 'notes' in self.attr:
+		if 'notes' in self.attr and self.attr['notes'] != '':
 			label += '\\n' + str(self.attr['notes'])
 		opts = ['label="' + label + '"']
 		opts.append('style=filled')
-		opts.append('fillcolor=' + ('F' in self.attr and 'bisque' or
-					('M' in self.attr and 'azure2' or 'white')))
+		gender_color = {'M': "azure2", 'F': 'bisque', 'O': 'green'}
+		opts.append('fillcolor=' + gender_color.get(self.attr['sex'], 'white'))
 		return self.id + '[' + ','.join(opts) + ']'
 
 class Household:
@@ -226,10 +229,10 @@ class Family:
 		return None
 
 	def populate(self, file_name):
-			if file_name.split('.')[-1] == 'csv':
-				self.populate_csv(file_name)
-			else:
-				self.populate_txt(file_name)
+		if file_name.split('.')[-1] == 'csv':
+			self.populate_csv(file_name)
+		else:
+			self.populate_txt(file_name)
 		
 	def populate_txt(self, file_name):
 		"""
@@ -267,7 +270,7 @@ class Family:
 		
 		"""
 		# Load the .csv into a dataframe
-		df = pd.read_csv(file_name, encoding='utf8')
+		df = pd.read_csv(file_name, encoding='utf8', keep_default_na=False)
 
 		# Perform some sanity check for the input
 		# TODO:implement the checks below
@@ -279,34 +282,36 @@ class Family:
 			# Check that everyone who has a father also has a mother
 			# Check that no one is married with themselves
 			# Check that no one is introduced before their parents are
+			# Check that only genders are F (Female), M (Male), O (Other)
 		
 		# Read the file line by line
 		for i, row in df.iterrows():
 			# Add the person to the list of people
 			p = Person(row)
 			self.add_person(p)
-			# Add the households, if the corresponding spouse has already been inserted
+			# Add the households, if the corresponding spouse has already been 
+			# inserted
 			spouses = ((row.spouse,) if isinstance(row.spouse,str) 
 			  else row.spouse)
-			if not pd.isna(spouses):
+			if spouses != '':
 				for s in spouses:
 					if s in self.everybody.keys():
 						h = Household()
-						h.parents.append(p)
 						h.parents.append(self.everybody[s])
+						h.parents.append(p)
 						self.add_household(h)
 
-						self.everybody[p.id].households.append(h)
-						self.everybody[self.everybody[s].id].households.append(h)
 			# Update the households for which one is a child
-			if not row[['father','mother']].isna().any():
+			if '' not in row[['father','mother']]:
 				#TODO: this might be slow. Could be faster if households were a
 				# dictionary mapping mother-father tuples to households rather
-				# than a households list, maybe
+				# than a list of Household, maybe
 				for h in self.households:
-					if (h.parents == list(row[['father','mother']]) or 
-						h.parents == list(row[['mother','father']])):
+					sparents = set(p.id for p in h.parents)
+					if (sparents == set(row[['father','mother']]) or 
+						sparents == set(row[['mother','father']])):
 						h.children.append(p)
+						print(f'{h}')
 
 	def find_first_ancestor(self):
 		"""Returns the first ancestor found.
@@ -358,6 +363,10 @@ class Family:
 		prev = None
 		for p in gen:
 			l = len(p.households)
+			print('___gen___')
+			print(f'{l=}, {p.name=}')
+			for h in p.households:
+				print(h)
 
 			if prev:
 				if l <= 1:
@@ -427,7 +436,8 @@ class Family:
 		return dot_lines
 
 	def output_descending_tree(self, ancestor):
-		"""Outputs the whole descending family tree from a given ancestor,
+		"""
+		Outputs the whole descending family tree from a given ancestor,
 		in DOT format.
 
 		"""
@@ -453,14 +463,14 @@ class Family:
 		return dot_lines
 
 def main():
-	"""Entry point of the program when called as a script.
-
+	"""
+	Entry point of the program when called as a script.
 	"""
 	# Parse command line options
 	parser = argparse.ArgumentParser(description=
 			 'Generates a family tree graph from a simple text file')
 	parser.add_argument('-a', dest='ancestor',
-						help='make the family tree from an ancestor (if '+
+						help='make the family tree from an ancestor (if ' +
 						'omitted, the program will try to find an ancestor)')
 	parser.add_argument('input', metavar='INPUTFILE',
 						help='the formatted text file representing the family')
@@ -483,10 +493,11 @@ def main():
 	# Output the graph descriptor, in DOT format
 	# TODO: the "_a" is added to mark that the family tree was build from an
 	# ancestor, as opposed to both ancestor and descendents
-	dot_out = str(Path(args.input).with_suffix(''))+'_a.dot'
+	dot_out = str(Path(args.input).with_suffix('')) + '_a.dot'
 	#dot_out = Path(args.input).with_suffix('_a.dot')
-	with codecs.open(dot_out,'w','utf-8') as f:
-		f.writelines([l + '\n' for l in family.output_descending_tree(ancestor)])
+	with codecs.open(dot_out, 'w', 'utf-8') as f:
+		f.writelines([l + '\n' for l in 
+				family.output_descending_tree(ancestor)])
 
 if __name__ == '__main__':
 	main()
