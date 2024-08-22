@@ -273,16 +273,7 @@ class Family:
 		df = pd.read_csv(file_name, encoding='utf8', keep_default_na=False)
 
 		# Perform some sanity check for the input
-		# TODO:implement the checks below
-		#self.check_df(df)
-
-			# Check that each identifier is unique
-			# Check that if one person lists a second one as their spouse,
-			# the second person reciprocates
-			# Check that everyone who has a father also has a mother
-			# Check that no one is married with themselves
-			# Check that no one is introduced before their parents are
-			# Check that only genders are F (Female), M (Male), O (Other)
+		self.check_df(df)
 		
 		# Read the file line by line
 		for i, row in df.iterrows():
@@ -312,6 +303,16 @@ class Family:
 						sparents == set(row[['mother','father']])):
 						h.children.append(p)
 						print(f'{h}')
+
+	def check_df(self, df):
+		...
+			# Check that each identifier is unique
+			# Check that if one person lists a second one as their spouse,
+			# the second person reciprocates
+			# Check that everyone who has a father also has a mother
+			# Check that no one is married with themselves
+			# Check that no one is introduced before their parents are
+			# Check that only genders are F (Female), M (Male), O (Other)
 
 	def find_first_ancestor(self):
 		"""Returns the first ancestor found.
