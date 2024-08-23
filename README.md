@@ -32,7 +32,7 @@ It will generate the tree from the infos in `LouisXIVfamily.txt`, starting from
 
 You can see the result:
 
-![result: LouisXIVfamily.png](/LouisXIVfamily.png)
+![result: LouisXIVfamily.png](/oldLouisXIVfamily.png)
 
 Things to change
 ----------------
