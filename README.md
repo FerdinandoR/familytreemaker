@@ -37,14 +37,13 @@ You can see the result:
 Things to change
 ----------------
 
-1. Ensure the code is written in python 3 rather than python 2
-2. Change family file format to .csv
-3. Generate family trees from below (i.e. tracing one's known ancestors) as well as from above (i.e. tracing one's descendants).
-4. Add places of birth/death
-5. Add support for marriages between cousins (needed for e.g. nonna Pia La Rocca and nonno Giovanni Lipari).
-6. Add some simple tests
+1. Generate family trees from below (i.e. tracing one's known ancestors) as well as from above (i.e. tracing one's descendants).
+2. Add places of birth/death
+3. Add support for marriages between cousins (needed for e.g. nonna Pia La Rocca and nonno Giovanni Lipari).
+4. Add some simple tests
 
 Things changed
 --------------
 
-None currently.
+1. Ensure the code is written in python 3 rather than python 2
+2. Change family file format to .csv
