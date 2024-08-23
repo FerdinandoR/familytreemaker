@@ -1,5 +1,4 @@
 digraph {
-	rankdir = "TB";
 	node [shape=box];
 	edge [dir=none];
 
