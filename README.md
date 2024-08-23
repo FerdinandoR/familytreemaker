@@ -41,6 +41,8 @@ Things to change
 2. Add places of birth/death
 3. Add support for marriages between cousins (needed for e.g. nonna Pia La Rocca and nonno Giovanni Lipari).
 4. Add some simple tests
+5. Add .png file generation from within, rather than calling graphviz externally
+6. Add generation from LaTeX of a whole .pdf document ready to print.
 
 Things changed
 --------------

@@ -182,7 +182,7 @@ class Family:
     everybody = {}
     households = []
 
-    invisible = '[shape=circle,label="",height=0.01,width=0.01]';
+    invisible = '[shape=circle,label="",height=0.01,width=0.01]'
 
     def add_person(self, person):
         """
@@ -393,14 +393,15 @@ class Family:
                 h = p.households[i]
                 spouse = Family.get_spouse(h, p)
                 dot_lines += [f'\t\t{spouse.id} -> h{h.id} -> {p.id};',
-                                f'\t\th{h.id}{Family.invisible};']
+				]
+    # TODO                            f'\t\th{h.id}{Family.invisible};']
 
             # Display those on the right (at least one)
             for i in range(int(l/2), l):
                 h = p.households[i]
                 spouse = Family.get_spouse(h, p)
-                dot_lines += [f'\t\t{p.id} -> h{h.id} -> {spouse.id};',
-                                f'\t\th{h.id}{Family.invisible};']
+                dot_lines += [f'\t\t{p.id} -> h{h.id} -> {spouse.id};',]
+                                #f'\t\th{h.id}{Family.invisible};']
                 prev = spouse.id
         dot_lines += ['\t}']
 
@@ -421,7 +422,7 @@ class Family:
                     ' -> '.join(map(lambda x: f'h{h.id}_{x}', range(l))) + 
                     ';']
                 for i in range(l):
-                    dot_lines += [f'\t\th{h.id}_{i}{Family.invisible};']
+                    #TODO: dot_lines += [f'\t\th{h.id}_{i}{Family.invisible};']
                     prev = 'h%d_%d' % (h.id, i)
         dot_lines += ['\t}']
 
@@ -454,6 +455,7 @@ class Family:
         # Print the description of everyone's box
         for p in self.everybody.values():
             dot_lines += ['\t' + p.graphviz() + ';']
+        dot_lines += [f'\tnode{self.invisible}']
         dot_lines += ['']
 
         # Print each generation
