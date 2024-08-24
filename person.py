@@ -24,7 +24,7 @@ class Person:
         if isinstance(arg, str):
             self.from_str(arg)
 
-        if isinstance(arg, pd.Series):
+        else:
             self.from_series(arg)
 
     def from_str(self, desc):
@@ -63,7 +63,8 @@ class Person:
                     'deathday',
                     'spouse',
                     'mother',
-                    'father')
+                    'father',
+                    'notes')
 
         # Ensure there are no unknown arguments
         unknown_args = set(d.keys()) - set(mandatory_args + opt_args)
@@ -93,17 +94,24 @@ class Person:
                 f' {len(self.households)} households'
 
     def graphviz(self):
+        # If the notes require less than this many characters, write them down,
+        # otherwise write a symbol detailing that such notes are present
+        # TODO: when we end up building a family tome, this symbol will be
+        # replaced by the relevant page number in said tome
+        max_notes = 60
+
         label = self.name
         if 'surname' in self.attr and self.attr['surname'] != '':
-            label += f'\\n« {self.attr['surname']}»'
+            label += f'\\n {self.attr['surname']}'
         if 'birthday' in self.attr and self.attr['birthday'] != '':
-            label += f'\\n{self.attr['birthday']}'
-            if 'deathday' in self.attr and self.attr['deathday'] != '':
-                label += f' † {self.attr['deathday']}'
-        elif 'deathday' in self.attr and self.attr['deathday'] != '':
-            label += f'\\n† {self.attr['deathday']}'
+            label += f'\\n * {self.attr['birthday']}'
+        if 'deathday' in self.attr and self.attr['deathday'] != '':
+            label += f'\\n † {self.attr['deathday']}'
         if 'notes' in self.attr and self.attr['notes'] != '':
-            label += f'\\n{self.attr['notes']}'
+            if len(self.attr['notes']) <= max_notes:
+                label += f'\\n{self.attr['notes']}'
+            else:
+                label += f'\\n...'
         opts = ['label="' + label + '"']
         opts.append('style=filled')
         sex_color = {'M': "azure2", 'F': 'bisque', 'O': 'green'}

@@ -2,17 +2,17 @@ digraph {
 	node [shape=box];
 	edge [dir=none];
 
-	LouisXIV[label="Louis XIV\n1638-09-05 † 1715-09-01",style=filled,fillcolor=azure2];
+	LouisXIV[label="Louis XIV\n * 1638-09-05\n † 1715-09-01",style=filled,fillcolor=azure2];
 	MarieThrsedAutriche[label="Marie-Thérèse d'Autriche",style=filled,fillcolor=bisque];
-	Louis1661[label="Louis de France\n1661-11-01 † 1711-04-14",style=filled,fillcolor=azure2];
-	MarieThrsendeFrance[label="Marie-Thérèse\nde France\n« la Petite Madame»\n1667 † 1672",style=filled,fillcolor=bisque];
-	PhilippeCharlesndeFrance[label="Philippe-Charles\nde France\n« Duc d'Anjou»\n1668-08-05",style=filled,fillcolor=azure2];
+	Louis1661[label="Louis de France\n * 1661-11-01\n † 1711-04-14",style=filled,fillcolor=azure2];
+	MarieThrsendeFrance[label="Marie-Thérèse\nde France\n la Petite Madame\n * 1667\n † 1672",style=filled,fillcolor=bisque];
+	PhilippeCharlesndeFrance[label="Philippe-Charles\nde France\n Duc d'Anjou\n * 1668-08-05",style=filled,fillcolor=azure2];
 	MarieAnnenChristinendeBavire[label="Marie Anne\nChristine\nde Bavière",style=filled,fillcolor=bisque];
-	Louis1682[label="Louis de France\n« duc de Bourgogne»\n1682 † 1712-02-19",style=filled,fillcolor=azure2];
-	Philippe[label="Philippe\n« roi d'Espagne\nsous le nom de\nPhilippe V»\n1683 † 1746",style=filled,fillcolor=azure2];
-	Charles[label="Charles\n1686-07-31",style=filled,fillcolor=azure2];
-	MarieAdladendeSavoie[label="Marie-Adélaïde\nde Savoie\n† 1712-02-12",style=filled,fillcolor=bisque];
-	LouisXV[label="Louis XV\n1710-02-15 † 1774-05-10",style=filled,fillcolor=azure2];
+	Louis1682[label="Louis de France\n duc de Bourgogne\n * 1682\n † 1712-02-19",style=filled,fillcolor=azure2];
+	Philippe[label="Philippe\n roi d'Espagne\nsous le nom de\nPhilippe V\n * 1683\n † 1746",style=filled,fillcolor=azure2];
+	Charles[label="Charles\n * 1686-07-31",style=filled,fillcolor=azure2];
+	MarieAdladendeSavoie[label="Marie-Adélaïde\nde Savoie\n † 1712-02-12",style=filled,fillcolor=bisque];
+	LouisXV[label="Louis XV\n * 1710-02-15\n † 1774-05-10",style=filled,fillcolor=azure2];
 	node[shape=circle,label="",height=0.01,width=0.01]
 
 	{ rank=same;
