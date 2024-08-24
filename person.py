@@ -54,9 +54,8 @@ class Person:
 
     def from_series(self, row):
         d = dict(row)
-        mandatory_args = ('id',)
-        opt_args = ('name',
-                    'surname',
+        mandatory_args = ('id','name')
+        opt_args = ('surname',
                     'sex',
                     'birthplace',
                     'birthday',
