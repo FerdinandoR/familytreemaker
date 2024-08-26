@@ -1,4 +1,4 @@
-familytreemaker
+radici
 ===============
 
 This program creates family tree graphs from simple text files.
