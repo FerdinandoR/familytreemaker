@@ -212,9 +212,8 @@ class Family:
         for i,p in enumerate(gen):
             # Do not draw someone if you have already drawn them as someone's
             # spouse
-            if hasattr(p,'spouse'):
-                if i > 0 and p.id in [pp.attr['spouse'] for pp in gen[:i]]:
-                    continue
+            if i > 0 and p.id in [pp.attr['spouse'] for pp in gen[:i]]:
+                continue
             p.draw = True
             l = len(p.households)
 
@@ -256,8 +255,22 @@ class Family:
             # TODO:if ascending, add the linking lines properly connecting the
             # brothers and sisters, like you would do above normally.
             # Too tired to do this reliably now.
-            # if ascending:
-            #    h = p.h
+            ascending = True
+            if ascending:
+                print(p.id)
+                if p.attr['father'] != '':
+                    f = self.everybody[p.attr['father']]
+                else: continue
+                if p.attr['mother'] != '':
+                    m = self.everybody[p.attr['mother']]
+                else: continue
+                h = next((x for x in self.households if x.parents == [f,m]), None)
+                siblings = [c.id for c in h.children if c.id != p.id]
+                print(p.id, siblings)
+                for s in siblings:
+                    dot_lines += [f'\t\t{prev} -> {s} [style=invis];']
+                    prev = s
+
             # blablabla 
 
         dot_lines += ['\t}']
@@ -268,9 +281,8 @@ class Family:
         for i, p in enumerate(gen):
             # Do not draw someone if you have already drawn them as someone's
             # spouse
-            if hasattr(p,'spouse'):
-                if i > 0 and p.id in [pp.attr['spouse'] for pp in gen[:i]]:
-                    continue
+            if i > 0 and p.id in [pp.attr['spouse'] for pp in gen[:i]]:
+                continue
             for h in p.households:
                 if len(h.children) == 0:
                     continue
@@ -296,9 +308,8 @@ class Family:
         for i, p in enumerate(gen):
             # Do not draw someone if you have already drawn them as someone's
             # spouse
-            if hasattr(p,'spouse'):
-                if i > 0 and p.id in [pp.attr['spouse'] for pp in gen[:i]]:
-                    continue
+            if i > 0 and p.id in [pp.attr['spouse'] for pp in gen[:i]]:
+                continue
             for h in p.households:
                 if len(h.children) > 0:
                     dot_lines += [f'\t\th{h.id} -> h{h.id}_'
