@@ -186,10 +186,8 @@ class Family:
         prev_gen = []
 
         for p in gen:
-            if hasattr(p, 'father'):
-                prev_gen += [p.father]
-            if hasattr(p, 'mother'):
-                prev_gen += [p.mother]
+            prev_gen += [self.everybody[p.attr[k]] 
+                         for k in ('father', 'mother') if p.attr[k] != '']
 
         return prev_gen
 
@@ -206,11 +204,17 @@ class Family:
         Outputs an entire generation in DOT format.
 
         """
-        # Display persons
+
+        ## Display people in a generation, side by side
         dot_lines = ['\t{ rank=same;']
 
         prev = None
-        for p in gen:
+        for i,p in enumerate(gen):
+            # Do not draw someone if you have already drawn them as someone's
+            # spouse
+            if hasattr(p,'spouse'):
+                if i > 0 and p.id in [pp.attr['spouse'] for pp in gen[:i]]:
+                    continue
             p.draw = True
             l = len(p.households)
 
@@ -249,12 +253,24 @@ class Family:
                 dot_lines += [f'\t\t{p.id} -> h{h.id} -> {spouse.id};',]
                                 #f'\t\th{h.id}{Family.invisible};']
                 prev = spouse.id
+            # TODO:if ascending, add the linking lines properly connecting the
+            # brothers and sisters, like you would do above normally.
+            # Too tired to do this reliably now.
+            # if ascending:
+            #    h = p.h
+            # blablabla 
+
         dot_lines += ['\t}']
 
         # Display lines below households
         dot_lines += ['\t{ rank=same;']
         prev = None
-        for p in gen:
+        for i, p in enumerate(gen):
+            # Do not draw someone if you have already drawn them as someone's
+            # spouse
+            if hasattr(p,'spouse'):
+                if i > 0 and p.id in [pp.attr['spouse'] for pp in gen[:i]]:
+                    continue
             for h in p.households:
                 if len(h.children) == 0:
                     continue
@@ -276,10 +292,17 @@ class Family:
                     prev = 'h%d_%d' % (h.id, i)
         dot_lines += ['\t}']
 
-        for p in gen:
+        ## Draw the children and connect them to the lines below the household
+        for i, p in enumerate(gen):
+            # Do not draw someone if you have already drawn them as someone's
+            # spouse
+            if hasattr(p,'spouse'):
+                if i > 0 and p.id in [pp.attr['spouse'] for pp in gen[:i]]:
+                    continue
             for h in p.households:
                 if len(h.children) > 0:
-                    dot_lines += [f'\t\th{h.id} -> h{h.id}_{int(len(h.children)/2)};']
+                    dot_lines += [f'\t\th{h.id} -> h{h.id}_'
+                                  f'{int(len(h.children)/2)};']
                     i = 0
                     for c in h.children:
                         c.draw = True
@@ -352,6 +375,7 @@ class Family:
         in DOT format.
 
         """
+        comment = False
         # Find the first households
         try:
             descendant[0]
@@ -361,7 +385,12 @@ class Family:
 
         # Print each generation
         dot_lines = []
+        print('AAAAAAAAAAAAAAAA')
+        if comment:
+            dot_lines += ['//Starting descending tree']
         while gen:
+            if comment:
+                dot_lines += [f'//Generation {[g.id for g in gen]}']
             dot_lines += self.display_generation(gen)
             gen = self.prev_generation(gen)
 
