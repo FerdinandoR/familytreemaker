@@ -22,6 +22,11 @@ def test_radici_txt():
     for i, (g,o) in enumerate(zip(gtf.readlines(),out_f.readlines())):
         assert g==o, (f'At line {i+1}:{g=}, while {o=}')
 
+    g_len = len(gtf.readlines())
+    o_len = len(out_f.readlines())
+    assert g_len == o_len, (f'Ground truth file has {g_len} lines, while '
+                            f'output file has {o_len} lines.')
+
 
 def test_radici_csv():
     '''
@@ -33,5 +38,6 @@ def test_radici_csv():
     check_output(f"python radici.py -a {source_name} {family_csv}")
     gtf = open(ground_truth_file,'r')
     out_f = open(test_out,'r')
+
     for i, (g,o) in enumerate(zip(gtf.readlines(),out_f.readlines())):
         assert g==o, (f'At line {i+1}:{g=}, while {o=}')

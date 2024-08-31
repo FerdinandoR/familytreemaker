@@ -46,7 +46,7 @@ def main():
     parser.add_argument('-a', dest='ancestor',
                         help='make the family tree from an ancestor (if ' +
                         'omitted, the program will try to find an ancestor)')
-    parser.add_argument('-v', dest='descendant',
+    parser.add_argument('-d', dest='descendant',
                         help='make the family tree from one or more '
                         'descendants, labelled by their ids, separated by a '
                         'space (optional)')
@@ -61,20 +61,18 @@ def main():
     family.populate(args.input)
 
     # Find the ancestor from whom the tree is built
+    ancestor = []
     if args.ancestor:
         ancestor = family.find_person(args.ancestor)
-        if not ancestor:
-            raise Exception(f'Cannot find person "{args.ancestor}"')
-    else:
+    elif not args.descendant:
         ancestor = family.find_first_ancestor()
 
     descendants = []
     if args.descendant:
-
         d_ids_list = args.descendant.split(' ')
 
         for d_id in d_ids_list:
-            descendants += family.find_person(d_id)
+            descendants += [family.find_person(d_id)]
 
     # Output the graph descriptor, in DOT format
     # TODO: the "_a" is added to mark that the family tree was build from an

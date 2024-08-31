@@ -13,6 +13,7 @@ class Person:
     - households      list of households this person belongs to
     - follow_children boolean to tell the algorithm to display this person's
                     descendent or not
+    - draw            boolean to determine if the person should be drawn or not
 
     """
 
@@ -20,6 +21,7 @@ class Person:
         self.attr = {}
         self.parents = []
         self.households = []
+        self.draw = False
 
         if isinstance(arg, str):
             self.from_str(arg)

@@ -59,7 +59,8 @@ class Family:
         for p in self.everybody.values():
             if p.name == name:
                 return p
-        return None
+        # If not found, raise an error
+        raise ValueError(f'Person {name} not found.')
 
     def populate(self, file_name):
         if file_name.split('.')[-1] == 'csv':
@@ -135,7 +136,6 @@ class Family:
                     if (sparents == set(row[['father','mother']]) or 
                         sparents == set(row[['mother','father']])):
                         h.children.append(p)
-                        print(f'{h}')
 
     def check_df(self, df):
         ...
@@ -211,6 +211,7 @@ class Family:
 
         prev = None
         for p in gen:
+            p.draw = True
             l = len(p.households)
 
             if prev:
@@ -235,6 +236,7 @@ class Family:
             for i in range(0, int(l/2)):
                 h = p.households[i]
                 spouse = Family.get_spouse(h, p)
+                spouse.draw = True
                 dot_lines += [f'\t\t{spouse.id} -> h{h.id} -> {p.id};',
 				]
     # TODO                            f'\t\th{h.id}{Family.invisible};']
@@ -243,6 +245,7 @@ class Family:
             for i in range(int(l/2), l):
                 h = p.households[i]
                 spouse = Family.get_spouse(h, p)
+                spouse.draw = True
                 dot_lines += [f'\t\t{p.id} -> h{h.id} -> {spouse.id};',]
                                 #f'\t\th{h.id}{Family.invisible};']
                 prev = spouse.id
@@ -279,6 +282,7 @@ class Family:
                     dot_lines += [f'\t\th{h.id} -> h{h.id}_{int(len(h.children)/2)};']
                     i = 0
                     for c in h.children:
+                        c.draw = True
                         dot_lines += [f'\t\th{h.id}_{i} -> {c.id};']
                         i += 1
                         if i == len(h.children)/2:
@@ -291,15 +295,16 @@ class Family:
         Output the family tree as a list of lines.
         '''
 
-        dot_lines = self.output_header()
-
+        dot_lines = []
         if ancestors != []:
             dot_lines += self.output_descending_tree(ancestors)
 
         if descendants != []:
             dot_lines += self.output_ascending_tree(descendants)
 
-        return dot_lines
+        header_lines = self.output_header()
+
+        return header_lines + dot_lines
 
     def output_header(self):
         '''
@@ -315,7 +320,8 @@ class Family:
 
         # Print the description of everyone's box
         for p in self.everybody.values():
-            dot_lines += ['\t' + p.graphviz() + ';']
+            if p.draw:
+                dot_lines += ['\t' + p.graphviz() + ';']
         dot_lines += [f'\tnode{self.invisible}',
                       '']
 
