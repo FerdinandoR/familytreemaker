@@ -100,7 +100,7 @@ class Person:
         # replaced by the relevant page number in said tome
         max_notes = 60
 
-        label = self.name
+        label = 'label="' + self.name
         if 'surname' in self.attr and self.attr['surname'] != '':
             label += f'\\n {self.attr['surname']}'
         if 'birthday' in self.attr and self.attr['birthday'] != '':
@@ -112,8 +112,10 @@ class Person:
                 label += f'\\n{self.attr['notes']}'
             else:
                 label += f'\\n...'
-        opts = ['label="' + label + '"']
-        opts.append('style=filled')
+        label += '"'
+
         sex_color = {'M': "azure2", 'F': 'bisque', 'O': 'green'}
-        opts.append(f'fillcolor={sex_color.get(self.attr['sex'], 'white')}')
+        opts = [label, 
+                'style=filled',
+                f'fillcolor={sex_color.get(self.attr['sex'], 'white')}']
         return self.id + '[' + ','.join(opts) + ']'

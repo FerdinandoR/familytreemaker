@@ -178,6 +178,21 @@ class Family:
 
         return next_gen
 
+    def prev_generation(self, gen):
+        '''
+        Takes a generation and returns the previous one as a list of people.
+        '''
+
+        prev_gen = []
+
+        for p in gen:
+            if hasattr(p, 'father'):
+                prev_gen += [p.father]
+            if hasattr(p, 'mother'):
+                prev_gen += [p.mother]
+
+        return prev_gen
+
     def get_spouse(household, person):
         """
         Returns the spouse or husband of a person in a union.
@@ -197,10 +212,6 @@ class Family:
         prev = None
         for p in gen:
             l = len(p.households)
-            print('___gen___')
-            print(f'{l=}, {p.name=}')
-            for h in p.households:
-                print(h)
 
             if prev:
                 if l <= 1:
@@ -255,6 +266,10 @@ class Family:
                     ';']
                 for i in range(l):
                     #TODO: dot_lines += [f'\t\th{h.id}_{i}{Family.invisible};']
+                    # TODO: this line is never reached in the example, so
+                    # can't currently be replaced without risking of messing
+                    # everything up
+                    # prev = f'h{h.id}_{i}'
                     prev = 'h%d_%d' % (h.id, i)
         dot_lines += ['\t}']
 
@@ -270,14 +285,28 @@ class Family:
                             i += 1
         return dot_lines
 
-    def output_descending_tree(self, ancestor):
-        """
-        Outputs the whole descending family tree from a given ancestor,
-        in DOT format.
+    
+    def output_tree(self, ancestors, descendants):
+        '''
+        Output the family tree as a list of lines.
+        '''
 
-        """
-        # Find the first households
-        gen = [ancestor]
+        dot_lines = self.output_header()
+
+        if ancestors != []:
+            dot_lines += self.output_descending_tree(ancestors)
+
+        if descendants != []:
+            dot_lines += self.output_ascending_tree(descendants)
+
+        return dot_lines
+
+    def output_header(self):
+        '''
+        Outputs the header, detailing the graph type and the description of
+        every box.
+    
+        '''
 
         # Print the .dot file header
         dot_lines = ['digraph {',
@@ -287,13 +316,48 @@ class Family:
         # Print the description of everyone's box
         for p in self.everybody.values():
             dot_lines += ['\t' + p.graphviz() + ';']
-        dot_lines += [f'\tnode{self.invisible}']
-        dot_lines += ['']
+        dot_lines += [f'\tnode{self.invisible}',
+                      '']
+
+        return dot_lines
+
+    def output_descending_tree(self, ancestor):
+        """
+        Outputs the whole descending family tree from a given ancestor,
+        in DOT format.
+
+        """
+        # Find the first households
+        gen = [ancestor]
 
         # Print each generation
+        dot_lines = []
         while gen:
             dot_lines += self.display_generation(gen)
             gen = self.next_generation(gen)
+
+        dot_lines += ['}']
+        return dot_lines
+
+
+    def output_ascending_tree(self, descendant):
+        """
+        Outputs the whole ascending family tree from a given descendant,
+        in DOT format.
+
+        """
+        # Find the first households
+        try:
+            descendant[0]
+            gen = descendant
+        except:
+            gen = [descendant]
+
+        # Print each generation
+        dot_lines = []
+        while gen:
+            dot_lines += self.display_generation(gen)
+            gen = self.prev_generation(gen)
 
         dot_lines += ['}']
         return dot_lines
