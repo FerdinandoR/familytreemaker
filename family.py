@@ -138,14 +138,59 @@ class Family:
                         h.children.append(p)
 
     def check_df(self, df):
-        ...
-            # Check that each identifier is unique
-            # Check that if one person lists a second one as their spouse,
-            # the second person reciprocates
-            # Check that everyone who has a father also has a mother
-            # Check that no one is married with themselves
-            # Check that no one is introduced before their parents are
-            # Check that only genders are F (Female), M (Male), O (Other)
+        '''
+        Performs some basic sanity check on the input DataFrame.
+        '''
+        # Check that each identifier is unique
+        duplicates = df.id.duplicated(keep=False)
+        if any(duplicates):
+            vals = list(df.id[duplicates].unique())
+            duplicated = [i for i, bool in enumerate(duplicates) if bool]
+            raise ValueError(f'Indices {vals} are repeated at rows '
+                             f'{duplicated}')
+
+        # Check that no one is married with themselves
+        self_married = df.id == df.spouse
+        if any(self_married):
+            vals = list(df.id[self_married])
+            self_married_ids = [i for i, bool in enumerate(self_married) 
+                                if bool]
+            raise ValueError(f'{vals} at rows '
+                             f'{self_married_ids} marry themselves')
+
+        # Check that if one person lists a second one as their spouse,
+        # the second person reciprocates
+        for i, row in df.iterrows():
+            r_spouse = row.spouse
+            if not isinstance(r_spouse, list):
+                r_spouse = [r_spouse]
+            spouses_from_df = list(df[df.spouse == row.id].id)
+            assert spouses_from_df == r_spouse or (
+                (r_spouse == ['']) and (spouses_from_df == [])), (
+                f'{i}-th element {row.id} '
+                f'lists "{r_spouse}" as their spouses, yet '
+                f'"{spouses_from_df}" claim they are their spouses')
+            
+        # Check that no one is introduced before their parents are
+        for i, row in df.iterrows():
+            if row.father not in df.id[:i].values and row.father != '':
+                raise ValueError(f'{i}-th element with id {row.id} introduced '
+                                 f'before their father {row.father}')
+
+        for i, row in df.iterrows():
+            if row.mother not in df.id[:i].values and row.mother != '':
+                raise ValueError(f'{i}-th element with id {row.id} introduced '
+                                 f'before their mother {row.mother}')
+
+        # Check that only genders are F (Female), M (Male), O (Other), if known
+        bad_sex = ~df.sex.isin(('F', 'M', 'O', ''))
+        if any(bad_sex):
+            ids = list(df.id[bad_sex].unique())
+            n_rows = [i for i, bool in enumerate(bad_sex) if bool]
+            unknown_sexes = df[bad_sex].sex.unique()
+            raise ValueError(f'{ids} at rows {n_rows} have unknown sex '
+                             f'{unknown_sexes}')
+        
 
     def find_first_ancestor(self):
         """Returns the first ancestor found.
@@ -199,7 +244,7 @@ class Family:
         return    household.parents[0] == person \
                 and household.parents[1] or household.parents[0]
 
-    def display_generation(self, gen):
+    def display_generation(self, gen, ascending=False):
         """
         Outputs an entire generation in DOT format.
 
@@ -212,8 +257,9 @@ class Family:
         for i,p in enumerate(gen):
             # Do not draw someone if you have already drawn them as someone's
             # spouse
-            if i > 0 and p.id in [pp.attr['spouse'] for pp in gen[:i]]:
-                continue
+            if hasattr(p,'spouse'):
+                if i > 0 and p.id in [pp.attr['spouse'] for pp in gen[:i]]:
+                    continue
             p.draw = True
             l = len(p.households)
 
@@ -255,8 +301,8 @@ class Family:
             # TODO:if ascending, add the linking lines properly connecting the
             # brothers and sisters, like you would do above normally.
             # Too tired to do this reliably now.
-            ascending = True
             if ascending:
+                pprev = prev
                 print(p.id)
                 if p.attr['father'] != '':
                     f = self.everybody[p.attr['father']]
@@ -268,8 +314,8 @@ class Family:
                 siblings = [c.id for c in h.children if c.id != p.id]
                 print(p.id, siblings)
                 for s in siblings:
-                    dot_lines += [f'\t\t{prev} -> {s} [style=invis];']
-                    prev = s
+                    dot_lines += [f'\t\t{pprev} -> {s} [style=invis];']
+                    pprev = s
 
             # blablabla 
 
@@ -281,8 +327,9 @@ class Family:
         for i, p in enumerate(gen):
             # Do not draw someone if you have already drawn them as someone's
             # spouse
-            if i > 0 and p.id in [pp.attr['spouse'] for pp in gen[:i]]:
-                continue
+            if hasattr(p,'spouse'):
+                if i > 0 and p.id in [pp.attr['spouse'] for pp in gen[:i]]:
+                    continue
             for h in p.households:
                 if len(h.children) == 0:
                     continue
@@ -338,7 +385,7 @@ class Family:
 
         header_lines = self.output_header()
 
-        return header_lines + dot_lines
+        return header_lines + dot_lines + ['}']
 
     def output_header(self):
         '''
@@ -376,7 +423,6 @@ class Family:
             dot_lines += self.display_generation(gen)
             gen = self.next_generation(gen)
 
-        dot_lines += ['}']
         return dot_lines
 
 
@@ -396,14 +442,14 @@ class Family:
 
         # Print each generation
         dot_lines = []
-        print('AAAAAAAAAAAAAAAA')
+        ascending = False
         if comment:
             dot_lines += ['//Starting descending tree']
         while gen:
             if comment:
                 dot_lines += [f'//Generation {[g.id for g in gen]}']
-            dot_lines += self.display_generation(gen)
+            dot_lines += self.display_generation(gen, ascending)
             gen = self.prev_generation(gen)
+            ascending = True
 
-        dot_lines += ['}']
         return dot_lines

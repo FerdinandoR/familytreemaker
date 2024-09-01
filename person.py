@@ -52,6 +52,9 @@ class Person:
             if 'unique' in self.attr:
                 self.id += str(random.randint(100, 999))
 
+        # Required to ensure compatibility in tests
+        self.attr['spouse'] = ''
+
         self.follow_children = True
 
     def from_series(self, row):
