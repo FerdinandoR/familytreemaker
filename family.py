@@ -93,6 +93,9 @@ class Family:
                         p = self.add_person(Person(line[1:]))
                         p.parents = h.parents
                         h.children.append(p)
+                        h.children.sort(key= lambda x: 
+                            x.attr['birthdate'] 
+                            if hasattr(x,'birthdate') else -1)
                     else:
                         p = self.add_person(Person(line))
                         h.parents.append(p)
@@ -105,6 +108,7 @@ class Family:
         """
         # Load the .csv into a dataframe
         df = pd.read_csv(file_name, encoding='utf8', keep_default_na=False)
+        df.columns = [c.lower() for c in df.columns]
 
         # Perform some sanity check for the input
         self.check_df(df)
@@ -191,6 +195,19 @@ class Family:
             raise ValueError(f'{ids} at rows {n_rows} have unknown sex '
                              f'{unknown_sexes}')
         
+        # Check that all spouses are known
+        # TODO: currently only works for single spouses, ignoring people with 
+        # multiple spouses whose 'spouse' field is a list (or a tuple, dunno)
+        bad_spouses = ~df.spouse.isin(df.id) & (df.spouse != '') & df.spouse.apply(
+            lambda x: isinstance(x, str)
+        )
+        if any(bad_spouses):
+            ids = list(df.id[bad_spouses].unique())
+            n_rows = [i for i, bool in enumerate(bad_spouses) if bool]
+            unknown_spouseses = df[bad_spouses].spouse.unique()
+            raise ValueError(f'{ids} at rows {n_rows} have unknown spouses '
+                             f'{unknown_spouseses}')
+        
 
     def find_first_ancestor(self):
         """Returns the first ancestor found.
@@ -251,21 +268,27 @@ class Family:
         """
 
         ## Display people in a generation, side by side
-        dot_lines = ['\t{ rank=same;']
+        newrank = ['\t{ rank=same;']
+        dot_lines = newrank.copy()
 
         prev = None
+        gen = sorted(gen, key=lambda x: x.attr['birthday'])
         for i,p in enumerate(gen):
             # Do not draw someone if you have already drawn them as someone's
-            # spouse
+            # spouse in this generation
             if hasattr(p,'spouse'):
                 if i > 0 and p.id in [pp.attr['spouse'] for pp in gen[:i]]:
                     continue
-            p.draw = True
+            p.drawn = True
             l = len(p.households)
 
             if prev:
                 if l <= 1:
-                    dot_lines += [f'\t\t{prev} -> {p.id} [style=invis];']
+                    # This if is required to prevent printing self-connections
+                    # when ascending the family tree, when a mother appears
+                    # both as someone's mother and a father's spouse.
+                    if prev != p.id:
+                        dot_lines += [f'\t\t{prev} -> {p.id} [style=invis];']
                 else:
                     # TODO: this line is never reached when building the
                     # default French royal family tree so is not checked.
@@ -285,44 +308,54 @@ class Family:
             for i in range(0, int(l/2)):
                 h = p.households[i]
                 spouse = Family.get_spouse(h, p)
-                spouse.draw = True
-                dot_lines += [f'\t\t{spouse.id} -> h{h.id} -> {p.id};',
-				]
+                if not spouse.drawn:
+                    # WARNING: the following lines was reformatted without 
+                    # realising that it's never entered during the default file
+                    # and as such errors might have been introduced.
+                    # However, this is unlikely as its format mirrors the one of
+                    # the spouse on the right, a few lines below
+                    dot_lines += [f'\t\t{spouse.id} -> h{h.id} -> {p.id};']
+                    spouse.drawn = True
     # TODO                            f'\t\th{h.id}{Family.invisible};']
 
             # Display those on the right (at least one)
             for i in range(int(l/2), l):
                 h = p.households[i]
                 spouse = Family.get_spouse(h, p)
-                spouse.draw = True
-                dot_lines += [f'\t\t{p.id} -> h{h.id} -> {spouse.id};',]
-                                #f'\t\th{h.id}{Family.invisible};']
-                prev = spouse.id
+                if not spouse.drawn:
+                    dot_lines += [f'\t\t{p.id} -> h{h.id} -> {spouse.id};']
+                                    #f'\t\th{h.id}{Family.invisible};']
+                    prev = spouse.id
+                    spouse.drawn = True
             # TODO:if ascending, add the linking lines properly connecting the
             # brothers and sisters, like you would do above normally.
             # Too tired to do this reliably now.
             if ascending:
                 pprev = prev
-                print(p.id)
                 if p.attr['father'] != '':
                     f = self.everybody[p.attr['father']]
                 else: continue
                 if p.attr['mother'] != '':
                     m = self.everybody[p.attr['mother']]
                 else: continue
-                h = next((x for x in self.households if x.parents == [f,m]), None)
-                siblings = [c.id for c in h.children if c.id != p.id]
-                print(p.id, siblings)
+                h = next((x for x in self.households 
+                          if x.parents == [f,m] or x.parents == [m,f]), None)
+                if h is None:
+                    raise ValueError(
+                        f'No household found with parents {m.id} and {f.id}, '
+                        f'')
+                siblings = [c.id for c in h.children if c.id not in (p.id, pprev)]
                 for s in siblings:
-                    dot_lines += [f'\t\t{pprev} -> {s} [style=invis];']
+                    dot_lines += [f'\t\t{pprev} -> {s} [style=invis];a']
                     pprev = s
 
             # blablabla 
 
-        dot_lines += ['\t}']
+        if len(dot_lines) != 1:
+            dot_lines += ['\t}']
+            dot_lines += ['\t{ rank=same;']
 
         # Display lines below households
-        dot_lines += ['\t{ rank=same;']
         prev = None
         for i, p in enumerate(gen):
             # Do not draw someone if you have already drawn them as someone's
@@ -333,8 +366,13 @@ class Family:
             for h in p.households:
                 if len(h.children) == 0:
                     continue
-                if prev:
-                    dot_lines += [f'\t\t{prev} -> h{h.id}_0 [style=invis];']
+                # Only print this if 
+                # 1. there's a previous node, 
+                # 2. The node does not go into itself
+                # 3. The node never goes backwards to a previous node in the same household
+                if prev and prev != f'h{h.id}_0' and (
+                    prev[1:-2] != str(h.id) or int(prev[1:-2]) < h.id ):
+                    dot_lines += [f'\t\t{prev} -> h{h.id}_0 [style=invis];b']
                 l = len(h.children)
                 if l % 2 == 0:
                     # We need to add a node to keep symmetry
@@ -363,11 +401,12 @@ class Family:
                                   f'{int(len(h.children)/2)};']
                     i = 0
                     for c in h.children:
-                        c.draw = True
+                        c.drawn = True
                         dot_lines += [f'\t\th{h.id}_{i} -> {c.id};']
                         i += 1
                         if i == len(h.children)/2:
                             i += 1
+                
         return dot_lines
 
     
@@ -378,9 +417,11 @@ class Family:
 
         dot_lines = []
         if ancestors != []:
+            #dot_lines += ['//start descending tree']
             dot_lines += self.output_descending_tree(ancestors)
 
         if descendants != []:
+            dot_lines += ['//start ascending tree']
             dot_lines += self.output_ascending_tree(descendants)
 
         header_lines = self.output_header()
@@ -401,7 +442,7 @@ class Family:
 
         # Print the description of everyone's box
         for p in self.everybody.values():
-            if p.draw:
+            if p.drawn:
                 dot_lines += ['\t' + p.graphviz() + ';']
         dot_lines += [f'\tnode{self.invisible}',
                       '']

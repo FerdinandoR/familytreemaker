@@ -49,6 +49,4 @@ digraph {
 		h2_0 -> LouisXV;
 	{ rank=same;
 	}
-	{ rank=same;
-	}
 }

@@ -58,3 +58,14 @@ def test_check_df():
     with pytest.raises(ValueError) as e:
         a.check_df(df)
     assert "[\'e\'] at rows [4] have unknown sex [\'U\']" in str(e)
+
+    # Check that unknown sexes raise an error
+    df = pd.DataFrame({'id': ('a', 'b', 'c', 'd', 'e'),
+                       'spouse': ('', '', '', '', ''),
+                       'father': ('', '', '', '', ''),
+                       'sex' : ('F', 'M', 'O', '', 'U'),
+                       'mother': ('', '', '', '', '')
+                       })
+    with pytest.raises(ValueError) as e:
+        a.check_df(df)
+    assert "[\'e\'] at rows [4] have unknown sex [\'U\']" in str(e)

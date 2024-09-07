@@ -35,8 +35,8 @@ digraph {
 	}
 		h1 -> h1_1;
 		h1_0 -> Louis1682;
-		h1_1 -> Philippe;
-		h1_2 -> Charles;
+		subgraph cluster_test{h1_1 -> Philippe;     graph[style=dotted];}
+		{h1_2 -> Charles;}
 	{ rank=same;
 		Louis1682 -> h2 -> MarieAdladendeSavoie;
 		MarieAdladendeSavoie -> Philippe [style=invis];
@@ -47,8 +47,6 @@ digraph {
 	}
 		h2 -> h2_0;
 		h2_0 -> LouisXV;
-	{ rank=same;
-	}
 	{ rank=same;
 	}
 }

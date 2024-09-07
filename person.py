@@ -21,7 +21,7 @@ class Person:
         self.attr = {}
         self.parents = []
         self.households = []
-        self.draw = False
+        self.drawn = False
 
         if isinstance(arg, str):
             self.from_str(arg)
